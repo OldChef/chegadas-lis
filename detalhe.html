@@ -178,7 +178,7 @@
 <script>
 // ── CONFIGURAÇÃO ──────────────────────────────────────────
 // Coloca aqui o ID do teu Google Sheet (o texto entre /d/ e /edit no URL)
-const SHEET_ID = 1FPcyTsm3QA5IhYNVgpKEjPgEjGml92oln17EAqOougk;
+const SHEET_ID = 'COLOCA_O_ID_DA_SHEET_AQUI';
 // ──────────────────────────────────────────────────────────
 
 const statusEl = document.getElementById('status');
@@ -190,10 +190,12 @@ const optionList = document.getElementById('optionList');
 
 let flights = [];
 let currentFlight = null;
+let lastFlightNum = null;
+const POLL_INTERVAL = 8000; // verifica a cada 8 segundos
 
 async function loadFlights() {
   try {
-    const res = await fetch('flights.json');
+    const res = await fetch('flights.json?_=' + Date.now());
     flights = await res.json();
     return true;
   } catch (e) {
@@ -208,12 +210,10 @@ async function fetchFlightNumber() {
     return null;
   }
   try {
-    // Lê a célula A1 via CSV publicado (sheet deve estar acessível)
-    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&range=A1`;
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&range=A1&_=${Date.now()}`;
     const res = await fetch(url);
     if (!res.ok) throw new Error('Sheet não acessível');
     const text = await res.text();
-    // CSV simples: remove aspas
     const flightNum = text.replace(/"/g, '').trim();
     return flightNum || null;
   } catch (e) {
@@ -237,12 +237,10 @@ function displayFlight(f) {
     return;
   }
   currentFlight = f;
-  statusEl.innerHTML = `Voo encontrado: <strong>${f.flight.toUpperCase()}</strong>`;
+  statusEl.innerHTML = `Voo encontrado: <strong>${f.flight.toUpperCase()}</strong> · atualizado automaticamente`;
 
-  // Card 1 - Origem
   originValue.textContent = f.origin || '—';
 
-  // Card 3 - Identificação
   idList.innerHTML = `
     <li><span class="label">Voo</span><span>${f.flight.toUpperCase()}</span></li>
     <li><span class="label">Matrícula</span><span>${(f.reg || '—').toUpperCase()}</span></li>
@@ -250,7 +248,6 @@ function displayFlight(f) {
     <li><span class="label">Stand</span><span>${f.stand || '—'}</span></li>
   `;
 
-  // Card 4 - Horários
   const rem = f.ata ? 'Arrived' : (f.remarks || '—');
   timeList.innerHTML = `
     <li><span class="label">STA</span><span>${f.sta || '—'}</span></li>
@@ -259,10 +256,29 @@ function displayFlight(f) {
     <li><span class="label">Remarks</span><span>${rem}</span></li>
   `;
 
-  // Reset gate selection
-  choiceDisplay.textContent = '';
-  optionList.classList.remove('hidden');
-  document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+  // Só reseta a escolha da porta se o voo mudou
+  if (lastFlightNum !== f.flight) {
+    choiceDisplay.textContent = '';
+    optionList.classList.remove('hidden');
+    document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+  }
+  lastFlightNum = f.flight;
+}
+
+async function checkForUpdate() {
+  const flightNum = await fetchFlightNumber();
+  if (!flightNum) return;
+  if (flightNum.toLowerCase().replace(/\s+/g, '') === lastFlightNum) return; // sem alteração
+  const f = findFlight(flightNum);
+  displayFlight(f);
+}
+
+async function init() {
+  const ok = await loadFlights();
+  if (!ok) return;
+  await checkForUpdate();
+  // Continua a verificar periodicamente
+  setInterval(checkForUpdate, POLL_INTERVAL);
 }
 
 // Gate selection
@@ -278,10 +294,9 @@ optionList.addEventListener('click', function(e) {
 async function init() {
   const ok = await loadFlights();
   if (!ok) return;
-  const flightNum = await fetchFlightNumber();
-  if (!flightNum) return;
-  const f = findFlight(flightNum);
-  displayFlight(f);
+  await checkForUpdate();
+  // Continua a verificar periodicamente
+  setInterval(checkForUpdate, POLL_INTERVAL);
 }
 
 init();
