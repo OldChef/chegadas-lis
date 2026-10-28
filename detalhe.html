@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Detalhe Voo - Chegadas LIS</title>
+<style>
+  :root {
+    --primary: #2b6cb0;
+    --bg: #f5f7fa;
+    --card: #ffffff;
+    --text: #1a202c;
+    --muted: #718096;
+    --border: #e2e8f0;
+    --arrived: #2f855a;
+    --delayed: #dd6b20;
+    --canceled: #c53030;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    margin: 0;
+    padding: 16px;
+    background: var(--bg);
+    color: var(--text);
+  }
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  h1 { margin: 0; font-size: 1.6rem; color: #1a365d; }
+  .back-btn {
+    background: var(--primary);
+    color: white;
+    padding: 10px 16px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .status {
+    background: #ebf4ff;
+    padding: 12px 16px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    font-size: 0.95rem;
+  }
+  .cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    min-height: 180px;
+  }
+  .card h2 {
+    margin: 0 0 12px 0;
+    font-size: 1.1rem;
+    color: #2d3748;
+  }
+  .card .value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #1a365d;
+  }
+  .card.gate {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .option-list {
+    display: flex;
+    gap: 10px;
+    margin: 10px 0;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .option-list.hidden { display: none; }
+  .option-btn {
+    padding: 12px 20px;
+    font-size: 18px;
+    font-weight: 700;
+    border: 2px solid var(--primary);
+    background: white;
+    color: var(--primary);
+    border-radius: 10px;
+    cursor: pointer;
+  }
+  .option-btn.selected {
+    background: var(--primary);
+    color: white;
+  }
+  .choice-display {
+    font-size: 5rem;
+    font-weight: 800;
+    color: #1a365d;
+    line-height: 1;
+    margin: 8px 0;
+    min-height: 70px;
+  }
+  .info-list { list-style: none; padding: 0; margin: 0; }
+  .info-list li {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid #edf2f7;
+    font-size: 0.95rem;
+  }
+  .info-list li:last-child { border: none; }
+  .label { color: var(--muted); }
+  .empty { color: #a0aec0; font-style: italic; }
+  @media (max-width: 700px) {
+    .cards { grid-template-columns: 1fr; }
+    .choice-display { font-size: 4rem; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Detalhe do Voo</h1>
+  <a href="index.html" class="back-btn">← Voltar</a>
+</header>
+
+<div class="status" id="status">A ler o Google Sheet...</div>
+
+<div class="cards">
+  <!-- Card 1: Origem -->
+  <div class="card">
+    <h2>Origem</h2>
+    <div class="value" id="originValue">—</div>
+    <p style="margin:8px 0 0; color:var(--muted); font-size:0.9rem;">De onde veio o voo</p>
+  </div>
+
+  <!-- Card 2: Porta de desembarque -->
+  <div class="card gate">
+    <h2>Porta de Desembarque</h2>
+    <div class="option-list" id="optionList">
+      <button class="option-btn" data-opt="N2">N2</button>
+      <button class="option-btn" data-opt="T">T</button>
+      <button class="option-btn" data-opt="S">S</button>
+      <button class="option-btn" data-opt="E">E</button>
+    </div>
+    <div class="choice-display" id="choiceDisplay"></div>
+  </div>
+
+  <!-- Card 3: Identificação -->
+  <div class="card">
+    <h2>Identificação</h2>
+    <ul class="info-list" id="idList">
+      <li><span class="label">Voo</span><span>—</span></li>
+      <li><span class="label">Matrícula</span><span>—</span></li>
+      <li><span class="label">Tipo</span><span>—</span></li>
+      <li><span class="label">Stand</span><span>—</span></li>
+    </ul>
+  </div>
+
+  <!-- Card 4: Horários -->
+  <div class="card">
+    <h2>Horários & Estado</h2>
+    <ul class="info-list" id="timeList">
+      <li><span class="label">STA</span><span>—</span></li>
+      <li><span class="label">ETA</span><span>—</span></li>
+      <li><span class="label">ATA</span><span>—</span></li>
+      <li><span class="label">Remarks</span><span>—</span></li>
+    </ul>
+  </div>
+</div>
+
+<script>
+// ── CONFIGURAÇÃO ──────────────────────────────────────────
+// Coloca aqui o ID do teu Google Sheet (o texto entre /d/ e /edit no URL)
+const SHEET_ID = 'COLOCA_O_ID_DA_SHEET_AQUI';
+// ──────────────────────────────────────────────────────────
+
+const statusEl = document.getElementById('status');
+const originValue = document.getElementById('originValue');
+const idList = document.getElementById('idList');
+const timeList = document.getElementById('timeList');
+const choiceDisplay = document.getElementById('choiceDisplay');
+const optionList = document.getElementById('optionList');
+
+let flights = [];
+let currentFlight = null;
+
+async function loadFlights() {
+  try {
+    const res = await fetch('flights.json');
+    flights = await res.json();
+    return true;
+  } catch (e) {
+    statusEl.textContent = 'Erro ao carregar dados dos voos.';
+    return false;
+  }
+}
+
+async function fetchFlightNumber() {
+  if (SHEET_ID === 'COLOCA_O_ID_DA_SHEET_AQUI' || !SHEET_ID) {
+    statusEl.innerHTML = 'Configura o ID da Google Sheet no código (SHEET_ID).<br>Partilha a sheet como "Qualquer pessoa com o link pode ver".';
+    return null;
+  }
+  try {
+    // Lê a célula A1 via CSV publicado (sheet deve estar acessível)
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&range=A1`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Sheet não acessível');
+    const text = await res.text();
+    // CSV simples: remove aspas
+    const flightNum = text.replace(/"/g, '').trim();
+    return flightNum || null;
+  } catch (e) {
+    statusEl.textContent = 'Não foi possível ler a célula A1. Verifica se a sheet está partilhada publicamente.';
+    return null;
+  }
+}
+
+function findFlight(flightNum) {
+  if (!flightNum) return null;
+  const q = flightNum.toLowerCase().replace(/\s+/g, '');
+  return flights.find(f => f.flight === q || f.flight.replace(/\s+/g, '') === q);
+}
+
+function displayFlight(f) {
+  if (!f) {
+    statusEl.textContent = 'Voo não encontrado nos dados.';
+    originValue.textContent = '—';
+    idList.innerHTML = '<li class="empty">Voo não encontrado</li>';
+    timeList.innerHTML = '<li class="empty">—</li>';
+    return;
+  }
+  currentFlight = f;
+  statusEl.innerHTML = `Voo encontrado: <strong>${f.flight.toUpperCase()}</strong>`;
+
+  // Card 1 - Origem
+  originValue.textContent = f.origin || '—';
+
+  // Card 3 - Identificação
+  idList.innerHTML = `
+    <li><span class="label">Voo</span><span>${f.flight.toUpperCase()}</span></li>
+    <li><span class="label">Matrícula</span><span>${(f.reg || '—').toUpperCase()}</span></li>
+    <li><span class="label">Tipo</span><span>${(f.type || '—').toUpperCase()}</span></li>
+    <li><span class="label">Stand</span><span>${f.stand || '—'}</span></li>
+  `;
+
+  // Card 4 - Horários
+  const rem = f.ata ? 'Arrived' : (f.remarks || '—');
+  timeList.innerHTML = `
+    <li><span class="label">STA</span><span>${f.sta || '—'}</span></li>
+    <li><span class="label">ETA</span><span>${f.eta || '—'}</span></li>
+    <li><span class="label">ATA</span><span>${f.ata || '—'}</span></li>
+    <li><span class="label">Remarks</span><span>${rem}</span></li>
+  `;
+
+  // Reset gate selection
+  choiceDisplay.textContent = '';
+  optionList.classList.remove('hidden');
+  document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+}
+
+// Gate selection
+optionList.addEventListener('click', function(e) {
+  const btn = e.target.closest('.option-btn');
+  if (!btn) return;
+  document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  choiceDisplay.textContent = btn.dataset.opt;
+  this.classList.add('hidden');
+});
+
+async function init() {
+  const ok = await loadFlights();
+  if (!ok) return;
+  const flightNum = await fetchFlightNumber();
+  if (!flightNum) return;
+  const f = findFlight(flightNum);
+  displayFlight(f);
+}
+
+init();
+</script>
+</body>
+</html>
