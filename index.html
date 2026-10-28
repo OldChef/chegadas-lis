@@ -145,66 +145,78 @@
     background: white;
     padding: 0;
     border-radius: 16px;
-    max-width: 380px;
-    width: 92%;
-    max-height: 90vh;
+    max-width: 640px;
+    width: 96%;
+    max-height: 94vh;
     overflow: hidden;
     box-shadow: 0 10px 40px rgba(0,0,0,0.3);
     display: flex;
     flex-direction: column;
   }
   .qr-top, .qr-bottom {
-    padding: 16px;
+    padding: 24px;
     text-align: center;
   }
   .qr-top {
     background: #f7fafc;
     border-bottom: 1px solid #e2e8f0;
-    min-height: 180px;
+    min-height: 260px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
   }
   .qr-bottom {
     background: white;
-    min-height: 240px;
+    min-height: 320px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
   }
   .option-list {
     display: flex;
     justify-content: center;
-    gap: 10px;
-    margin: 12px 0;
+    gap: 12px;
+    margin: 16px 0;
     flex-wrap: wrap;
   }
+  .option-list.hidden {
+    display: none;
+  }
   .option-btn {
-    padding: 12px 20px;
-    font-size: 18px;
+    padding: 14px 24px;
+    font-size: 20px;
     font-weight: 700;
     border: 2px solid #2b6cb0;
     background: white;
     color: #2b6cb0;
-    border-radius: 10px;
+    border-radius: 12px;
     cursor: pointer;
-    min-width: 60px;
+    min-width: 70px;
   }
   .option-btn.selected {
     background: #2b6cb0;
     color: white;
   }
   .choice-display {
-    font-size: 4rem;
+    font-size: 9rem;
     font-weight: 800;
     color: #1a365d;
-    margin: 8px 0;
-    min-height: 70px;
-    line-height: 1;
+    margin: 12px 0;
+    min-height: 110px;
+    line-height: 0.9;
+    letter-spacing: -3px;
   }
-  #qrcode { margin: 10px auto; }
+  #qrcode { margin: 16px auto; display: block; }
   .qr-close {
-    margin-top: 10px;
+    margin-top: 12px;
     background: #e53e3e;
     color: white;
     border: none;
-    padding: 10px 24px;
+    padding: 12px 28px;
     border-radius: 8px;
-    font-size: 15px;
+    font-size: 16px;
     cursor: pointer;
   }
   .arrived { color: var(--arrived); }
@@ -572,8 +584,8 @@ function showQR(f) {
   qrDiv.innerHTML = '';
   new QRCode(qrDiv, {
     text: text,
-    width: 180,
-    height: 180,
+    width: 220,
+    height: 220,
     colorDark: "#1a365d",
     colorLight: "#ffffff",
     correctLevel: QRCode.CorrectLevel.M
