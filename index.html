@@ -565,6 +565,7 @@ function showQR(f) {
   // Reset selection
   choiceDisplay.textContent = '';
   document.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('selected'));
+  document.getElementById('optionList').classList.remove('hidden');
 
   // Generate QR
   const text = `${flight}|${reg}|${origin}`;
@@ -588,15 +589,13 @@ document.getElementById('optionList').addEventListener('click', function(e) {
   document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
   btn.classList.add('selected');
   document.getElementById('choiceDisplay').textContent = btn.dataset.opt;
+  // Hide options after selection to give space to the big letter
+  this.classList.add('hidden');
 });
 
 function closeQR() {
   document.getElementById('qrModal').classList.remove('active');
   currentFlightForQR = null;
-}
-
-function closeQR() {
-  document.getElementById('qrModal').classList.remove('active');
 }
 
 document.getElementById('qrModal').addEventListener('click', function(e) {
