@@ -436,6 +436,8 @@ function getDisplayRemarks(f) {
   if (f.remarks === 'ARRIVED') return 'Arrived';
   return '';
 }
+
+function renderCards(list) {
   const container = document.getElementById('flightCards');
   container.innerHTML = '';
   if (list.length === 0) {
